@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON SWARM 3D - Admin Login</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            font-family: 'Courier New', monospace;
+            color: #00ffcc;
+            overflow: hidden;
+        }
+
+        /* ===== LOGIN SCREEN ===== */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000 0%, #0a0a1a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        #loginScreen.hidden {
+            display: none;
+        }
+
+        .login-container {
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #00ffcc;
+            border-radius: 15px;
+            padding: 60px;
+            box-shadow: 0 0 50px #00ffcc, inset 0 0 50px rgba(0, 255, 204, 0.1);
+            min-width: 400px;
+            text-align: center;
+            animation: loginPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes loginPulse {
+            0%, 100% { box-shadow: 0 0 50px #00ffcc, inset 0 0 50px rgba(0, 255, 204, 0.1); }
+            50% { box-shadow: 0 0 80px #ff00ff, inset 0 0 50px rgba(255, 0, 255, 0.1); }
+        }
+
+        .login-title {
+            font-size: 48px;
+            color: #ff00ff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffcc;
+            letter-spacing: 3px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: #00ffcc;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px #00ffcc;
+            letter-spacing: 2px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: #00ffcc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+
+        .form-input {
+            padding: 15px;
+            background: rgba(0, 255, 204, 0.05);
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            color: #00ffcc;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00ffcc;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: rgba(0, 255, 204, 0.1);
+            box-shadow: 0 0 20px #00ffcc, inset 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: rgba(0, 255, 204, 0.5);
+        }
+
+        .login-btn {
+            padding: 15px;
+            background: rgba(255, 0, 255, 0.1);
+            border: 2px solid #ff00ff;
+            border-radius: 5px;
+            color: #ff00ff;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px #ff00ff;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 30px #ff00ff;
+            transform: scale(1.05);
+        }
+
+        .login-error {
+            color: #ff0055;
+            font-size: 14px;
+            text-shadow: 0 0 10px #ff0055;
+            display: none;
+            margin-top: 10px;
+        }
+
+        .login-error.show {
+            display: block;
+        }
+
+        /* ===== GAME SCREEN ===== */
+        #gameContainer {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gameContainer.active {
+            display: block;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ===== HUD ===== */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hud-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 30px;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+            font-size: 16px;
+        }
+
+        .hud-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .hud-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .hud-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+
+        .hud-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+        }
+
+        .admin-badge {
+            padding: 5px 15px;
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid #ff00ff;
+            border-radius: 5px;
+            color: #ff00ff;
+            font-size: 12px;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 2px solid #00ffcc;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ffcc, inset 0 0 10px rgba(0, 255, 204, 0.2);
+            pointer-events: none;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #00ffcc;
+            box-shadow: 0 0 5px #00ffcc;
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 12px;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .crosshair::after {
+            width: 12px;
+            height: 2px;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        #xpBar {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 300px;
+            height: 12px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid #00ffcc;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        #xpFill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffcc, #ff00ff);
+            width: 0%;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 10px #00ffcc;
+        }
+
+        .xp-label {
+            position: absolute;
+            bottom: 45px;
+            left: 30px;
+            font-size: 12px;
+            color: #00ffcc;
+            text-shadow: 0 0 10px #00ffcc;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #comboCounter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            font-weight: bold;
+            color: #ff00ff;
+            text-shadow: 0 0 30px #ff00ff, 0 0 60px #ff00ff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 50;
+            transition: opacity 0.2s ease;
+        }
+
+        #upgradePanel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #00ffcc;
+            border-radius: 15px;
+            padding: 50px;
+            box-shadow: 0 0 50px #00ffcc, inset 0 0 30px rgba(0, 255, 204, 0.1);
+            display: none;
+            z-index: 200;
+            min-width: 500px;
+            pointer-events: auto;
+        }
+
+        #upgradePanel.show {
+            display: block;
+            animation: panelPulse 0.5s ease;
+        }
+
+        @keyframes panelPulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .upgrade-title {
+            text-align: center;
+            font-size: 32px;
+            color: #ff00ff;
+            margin-bottom: 40px;
+            text-shadow: 0 0 20px #ff00ff;
+        }
+
+        .upgrades-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .upgrade-btn {
+            padding: 25px;
+            background: rgba(0, 255, 204, 0.05);
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ffcc;
+            pointer-events: auto;
+        }
+
+        .upgrade-btn:hover {
+            background: rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 30px #00ffcc, inset 0 0 15px rgba(0, 255, 204, 0.3);
+            transform: scale(1.08);
+        }
+
+        .upgrade-btn:active {
+            transform: scale(0.95);
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+        }
+
+        #gameOverScreen.show {
+            display: flex;
+        }
+
+        .gameOverContent {
+            text-align: center;
+            color: #ff00ff;
+            text-shadow: 0 0 30px #ff00ff;
+        }
+
+        .gameOverTitle {
+            font-size: 64px;
+            margin-bottom: 30px;
+            animation: glitch 0.5s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { text-shadow: 0 0 30px #ff00ff; }
+            50% { text-shadow: 0 0 60px #ff00ff, 0 0 90px #00ffcc; }
+        }
+
+        .gameOverStats {
+            font-size: 24px;
+            margin: 30px 0;
+            color: #00ffcc;
+            text-shadow: 0 0 15px #00ffcc;
+        }
+
+        .gameOverStats div {
+            margin: 15px 0;
+        }
+
+        .restartBtn {
+            margin-top: 40px;
+            padding: 20px 50px;
+            background: rgba(255, 0, 255, 0.1);
+            border: 2px solid #ff00ff;
+            color: #ff00ff;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 15px #ff00ff;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: auto;
+        }
+
+        .restartBtn:hover {
+            background: rgba(255, 0, 255, 0.2);
+            box-shadow: 0 0 40px #ff00ff;
